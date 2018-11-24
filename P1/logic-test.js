@@ -69,50 +69,127 @@ const winsByTeams = [
 */
 
 // 0 Arreglo con los ids de los equipos (función de ejemplo)
-function listTeamsIds () {
-  return teams.map((client) => client.id)
+function listTeamsIds() {
+  return teams.map((team) => team.id)
 }
 
 // 1 Arreglo con los nombres de los equipos y el país al que pertenecen, ordenados alfabéticamente por el nombre de su país de origen.
-function listTeamsByCountry () {
-  // CODE HERE
+function listTeamsByCountry() {
+  return teams.map(team => ({ country: team.country, name: team.name }))
+    .sort((prev, next) => {
+      if (prev.country > next.country) {
+        return 1;
+      }
+      else if (prev.country < next.country) {
+        return -1;
+      } else {
+        return 0;
+      }
+    })
 }
 
 // 2 Arreglo con los nombres de los equipos ordenados de mayor a menor por la cantidad de victorias en champions league.
-function sortTeamsByWins () {
-  // CODE HERE
+function sortTeamsByWins() {
+  return teams.map(team => {
+    let winsTeam = winsByTeams.find(winsByteam => winsByteam.teamId === team.id)
+    return { name: team.name, wins: winsTeam.wins }
+  })
+    .sort((prevTeam, nextTeam) => nextTeam.wins - prevTeam.wins)
+    .map(team => team.name)
 }
 
 // 3 Arreglo de objetos en donde se muestre el nombre de las ligas y la sumatoria de las victorias de los equipos que pertenecen a ellas.
-function leaguesWithWins () {
-  // CODE HERE
+function leaguesWithWins() {
+  return leagues.map(league => {
+    let totalWins = teamsByLeague.filter(teamByLeague => teamByLeague.leagueId === league.id)
+      .map(league => {
+        return winsByTeams.find(winByTeam => winByTeam.teamId === league.teamId)
+      })
+      .reduce((total, currentWinByTeam) => {
+        return total += currentWinByTeam.wins;
+      }, 0)
+
+    return {
+      league: league.name,
+      totalWins
+    }
+  })
 }
 
 // 4 Objeto en que las claves sean los nombres de las ligas y los valores el nombre del equipo con la menor cantidad de victorias en champions.
-function leaguesWithTeamWithLestWins () {
-  // CODE HERE
+function leaguesWithTeamWithLestWins() {
+  return leagues.map(league => {
+    let teamLessVictories = teamsByLeague.filter(teamByLeague => teamByLeague.leagueId === league.id)
+      .map(league => {
+        return winsByTeams.find(winByTeam => winByTeam.teamId === league.teamId)
+      })
+      .sort((prevWinByTeam, nextWinByTeam) => nextWinByTeam.wins - prevWinByTeam.wins)
+      .pop()
+
+    return { [league.name]: teamLessVictories.wins }
+  })
 }
 
 // 5 Objeto en que las claves sean los nombres de las ligas y los valores el nombre del equipo con la mayor cantidad de victorias en champions.
-function leaguesWithTeamWithMostWins () {
-  // CODE HERE
+function leaguesWithTeamWithMostWins() {
+  return leagues.map(league => {
+    let teamLessVictories = teamsByLeague.filter(teamByLeague => teamByLeague.leagueId === league.id)
+      .map(league => {
+        return winsByTeams.find(winByTeam => winByTeam.teamId === league.teamId)
+      })
+      .sort((prevWinByTeam, nextWinByTeam) => prevWinByTeam.wins - nextWinByTeam.wins)
+      .pop()
+    return { [league.name]: teamLessVictories.wins }
+  })
 }
 
 // 6 Arreglo con los nombres de las ligas ordenadas de mayor a menor por la cantidad de victorias de sus equipos.
-function sortLeaguesByTeamsByWins () {
-  // CODE HERE
+function sortLeaguesByTeamsByWins() {
+  return leagues.map(league => {
+    let totalWins = teamsByLeague.filter(teamByLeague => teamByLeague.leagueId === league.id)
+      .map(league => {
+        return winsByTeams.find(winByTeam => winByTeam.teamId === league.teamId)
+      })
+      .reduce((total, currentWinByTeam) => {
+        return total += currentWinByTeam.wins;
+      }, 0)
+
+    return {
+      league: league.name,
+      totalWins
+    }
+  })
+    .map(league => league.league)
+
 }
 
 // 7 Arreglo con los nombres de las ligas ordenadas de mayor a menor por la cantidad de equipos que participan en ellas.
-function sortLeaguesByTeams () {
-  // CODE HERE
+function sortLeaguesByTeams() {
+  return leagues.map(league => {
+    let totalTeams = teamsByLeague.filter(teamByLeague => teamByLeague.leagueId === league.id).length
+    return {
+      league: league.name,
+      totalTeams
+    }
+  })
+    .sort((prevLeague, nextLeague) => nextLeague.totalTeams - prevLeague.totalTeams)
+    .map(league => league.league)
+
+
 }
 
 // 8 Agregar un nuevo equipo con datos ficticios a "teams", asociarlo a la liga de Francia y agregar un total de 4 victorias en champions.
 // Luego devolver el lugar que ocupa este equipo en el ranking de la pregunta 2.
 // No modificar arreglos originales para no alterar las respuestas anteriores al correr la solución
-function newTeamRanking () {
-  // CODE HERE
+function newTeamRanking() {
+  let newTeam = { id: 14, country: 'France', name: 'Paris saint-germain' }
+  let championsWin = { teamId: 14, wins: 4 }
+  teams.push(newTeam);
+  winsByTeams.push(championsWin);
+
+  let ranking = sortTeamsByWins();
+  let rankingPosition = ranking.indexOf('Paris saint-germain');
+  return rankingPosition + 1;
 }
 
 // 9 Realice una función que retorne una promesa con los nombres de los equipos en upper case.
@@ -120,10 +197,22 @@ function newTeamRanking () {
 // recuerde que debe esperar el retorno de función asíncrona para que su resultado pueda ser mostrado por el
 // console.log. Utilice async await para la llamada asíncrona a la función.
 // NOTA: solo debe crear la función asíncrona y agregar la llamada en la siguiente función.
-async function getTeamsNamesAsUpperCase () {
+
+async function getTeamsUppercase() {
+  return new Promise((resolve, reject) => {
+    let teamsUppercase = teams.map(team => team.name.toUpperCase())
+    if (teamsUppercase.length) {
+      resolve(teamsUppercase)
+    } else {
+      reject(Error(`No teams found`))
+    }
+  })
+}
+
+async function getTeamsNamesAsUpperCase() {
   let response
   // ------MAKE AWAIT CALL HERE------
-
+  response = await getTeamsUppercase()
   // --------------------------------
   console.log('response:')
   console.log(response)
