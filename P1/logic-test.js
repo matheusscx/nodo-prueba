@@ -75,17 +75,18 @@ function listTeamsIds() {
 
 // 1 Arreglo con los nombres de los equipos y el país al que pertenecen, ordenados alfabéticamente por el nombre de su país de origen.
 function listTeamsByCountry() {
-  return teams.map(team => ({ country: team.country, name: team.name }))
-    .sort((prev, next) => {
-      if (prev.country > next.country) {
-        return 1;
-      }
-      else if (prev.country < next.country) {
-        return -1;
-      } else {
-        return 0;
-      }
-    })
+  return teams.sort((prev, next) => {
+    if (prev.country > next.country) {
+      return 1;
+    }
+    else if (prev.country < next.country) {
+      return -1;
+    } else {
+      return 0;
+    }
+  })
+    .map(team => (`${team.name} ${team.country}`))
+
 }
 
 // 2 Arreglo con los nombres de los equipos ordenados de mayor a menor por la cantidad de victorias en champions league.
@@ -118,7 +119,7 @@ function leaguesWithWins() {
 
 // 4 Objeto en que las claves sean los nombres de las ligas y los valores el nombre del equipo con la menor cantidad de victorias en champions.
 function leaguesWithTeamWithLestWins() {
-  return leagues.map(league => {
+  return leagues.reduce((teamsLessVictories, league) => {
     let teamLessVictories = teamsByLeague.filter(teamByLeague => teamByLeague.leagueId === league.id)
       .map(league => {
         return winsByTeams.find(winByTeam => winByTeam.teamId === league.teamId)
@@ -126,21 +127,26 @@ function leaguesWithTeamWithLestWins() {
       .sort((prevWinByTeam, nextWinByTeam) => nextWinByTeam.wins - prevWinByTeam.wins)
       .pop()
 
-    return { [league.name]: teamLessVictories.wins }
-  })
+    let team = teams.find(team => team.id === teamLessVictories.teamId)
+
+    return teamsLessVictories = { ...teamsLessVictories, [league.name]: team.name }
+  }, {})
 }
 
 // 5 Objeto en que las claves sean los nombres de las ligas y los valores el nombre del equipo con la mayor cantidad de victorias en champions.
 function leaguesWithTeamWithMostWins() {
-  return leagues.map(league => {
+  return leagues.reduce((teamsMorevictories, league) => {
     let teamLessVictories = teamsByLeague.filter(teamByLeague => teamByLeague.leagueId === league.id)
       .map(league => {
         return winsByTeams.find(winByTeam => winByTeam.teamId === league.teamId)
       })
       .sort((prevWinByTeam, nextWinByTeam) => prevWinByTeam.wins - nextWinByTeam.wins)
       .pop()
-    return { [league.name]: teamLessVictories.wins }
-  })
+
+    let team = teams.find(team => team.id === teamLessVictories.teamId)
+
+    return teamsMorevictories = { ...teamsMorevictories, [league.name]: team.name }
+  }, {})
 }
 
 // 6 Arreglo con los nombres de las ligas ordenadas de mayor a menor por la cantidad de victorias de sus equipos.
@@ -159,6 +165,7 @@ function sortLeaguesByTeamsByWins() {
       totalWins
     }
   })
+    .sort((prevleague, nextLeague) => nextLeague.totalWins - prevleague.totalWins)
     .map(league => league.league)
 
 }
